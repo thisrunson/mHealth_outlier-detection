@@ -1,0 +1,3 @@
+settings:
+    od_root		: "/Users/tedmccarthy/Dropbox/Outlier Detection/"
+    output_dir	: "output_data/"

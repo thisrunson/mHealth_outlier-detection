@@ -1,0 +1,94 @@
+##Go through all reports and plot answers for all questions  - generate one report for ALL CHW answers to ONE question
+
+	CHW_file <- #read in file
+		
+	output_filename <- paste("Aggregate Answer Counts - All ASHAs", ".pdf", sep="")
+	pdf(output_filename, width=12, height=5, onefile=TRUE)
+	
+	question <- "institutional"
+	cur_question <- paste("CHW_file", question, sep="$")
+	
+	#replace instances of "---" or "" (represents unanswered) with "no" for answer col on form
+	CHW_file[cur_question=="",question] <- "no" 
+	CHW_file[cur_question=="---",question] <- "no" 
+			
+	##Only part left to automate - how make CHW_file$instituational into a var name here?
+	counts <- table(CHW_file$institutional)
+			
+	bp <- barplot(counts, main = cur_question, xlab = "Answer Options", ylab = "Counts")
+	text(x = bp, y = counts+0.5, labels=as.character(counts), xpd=TRUE)
+	
+	##Now try with form.bp2.play_birth_preparedness_vid - what happened to line subsetting CHW_institutional from form.bp2.now_institutional?
+	
+	dev.off()
+
+#the above works for now - below code tidbits can be used for automating
+-------------------------------------
+	
+	#questions <- c("form.bp2.now_institutional")
+	
+	#iterate through each question, be sure is coded correctly, and send answer counts to plot_CHWhists to plot
+	#for (q in questions){
+	#	question <- CHW_file$form.bp2.now_institutional
+	#	plot_CHWhists(question)
+	#}
+	
+	#this function takes care of all the plotting, and calculates the number of breaks to put in the data based on the length of data collection
+	plot_CHWhists <- function (question_on_form){
+	
+		#plot the data in a histogram
+		barplot(table(question_on_form), main = question_on_form, xlab = "Answer Options", ylab = "Counts", freq=TRUE)
+	}
+	
+	dev.off()
+	
+------------------------------------
+
+
+##Go through reports and plot answer distributions for EACH CHW for EACH question
+
+	CHW_file <- #read in file 
+	
+	#find all unique CHWs in file
+	unique_CHWs <- unique(CHW_file$form.meta.userID)
+	
+	#replace instances of "---" or "" (represents unanswered) with "no" for answer col on form
+	CHW_file[CHW_file$institutional=="","institutional"] <- "no" 
+	CHW_file[CHW_file$institutional=="---","institutional"] <- "no" 
+	
+	question <- "CHW_file$institutional"
+	
+	output_filename <- paste("Aggregate Answer Counts - One ASHA", ".pdf", sep="")
+	pdf(output_filename, width=12, height=5, onefile=TRUE)
+	
+	#plot four graphs per page
+	par(mfrow = c(2,2))
+			
+	#this function takes care of all the plotting
+	plot_CHWhists <- function (data, graph_title){
+	
+		counts <- table(data$institutional)
+			
+		bp <- barplot(prop.table(counts), main = graph_title, xlab = "Answer Options", ylab = "Proportions", ylim=c(0,1))
+		text(x = bp, y = counts+0.5, labels=as.character(counts), xpd=TRUE)
+	 }
+	 
+	#this will do the same plotting, but with frequency counts instead of proportions
+	#plot_CHWhists <- function (data, graph_title){
+	#
+	#	counts <- table(data$institutional)
+	#		
+	#	bp <- barplot(counts, main = graph_title, xlab = "Answer Options", ylab = "Proportions")
+	#	text(x = bp, y = counts+0.5, labels=as.character(counts), xpd=TRUE)
+	#}
+
+	#iterate through the unique_CHWs list, make a subset for each CHW, and send the subset to plot_CHWhists for plotting
+	for (n in unique_CHWs){
+		CHW_subset <- subset(CHW_file, CHW_file$form.meta.userID == n)
+		title <- paste(question, n, sep="--")
+		plot_CHWhists(CHW_subset, title)
+	}	
+	
+	dev.off()
+	
+-----------------

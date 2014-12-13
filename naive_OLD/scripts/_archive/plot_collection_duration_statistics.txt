@@ -1,0 +1,35 @@
+##plot all collection times, saved as "all_collection_durations.pdf"
+		CHWs <- #read in file
+		
+		pdf("all_collection_durations.pdf", width=12, height=5)
+		
+		plot(CHWs$form.meta.userID, CHWs$collection_times, xlab="User ID", ylab="Collection Duration in Seconds")
+		
+	    dev.off()
+		
+##get a closer look at collection times under 3000s (= 50 minutes)
+		short_times_only <- subset(CHWs, CHWs$collection_times < 3000)
+
+		pdf("collection_durations_under_3000s.pdf", width=12, height=5)
+	
+		plot(short_times_only$form.meta.userID, short_times_only$collection_times, xlab="User ID", ylab="Collection Duration in Seconds")
+	
+		dev.off()	
+		
+		
+##make a histogram (with bin widths of 60s) of all recordings under 3000s
+		bins <- seq(0,3000, by=60)
+
+		mean_times <- mean(short_times_only$collection_times)
+		stdevs <- mean_times + c(-2,-1,1,2)*sd(short_times_only$collection_times)
+
+		pdf("hist_collection_durations_under_3000s.pdf", width=12, height=5)
+
+		hist(short_times_only$collection_times, breaks=bins, main="Collection Durations for All Reports, bins of 60 seconds", xlab="Length of Collection Time (seconds)", ylab="Number of Reports")
+		
+		#add lines for the mean and SDs
+		abline(v = mean_times, col = "blue")
+		abline(v = stdevs, col = "red", lty="dotted")		
+		
+		dev.off()	
+		

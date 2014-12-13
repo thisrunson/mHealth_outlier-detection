@@ -1,0 +1,47 @@
+##Convert timestamps into POSIXct and pull out only time info, pull unique CHW names from file, make a subset of data for each CHW, and plot a histogram of all report collection times across all days for each CHW	
+
+#Need to standardize output display to 24 hours
+	
+	require("ggplot2")
+	require("scales")
+	
+	#for my local file
+	#CHW_file <- read.csv("/Users/tedmccarthy/Documents/Research Projects/CHW Outlier Detection/modified_data/startendtimes_clean_use-this-one.csv")
+	
+	#CHW_file <- #read in file
+	
+	#convert timestamps for all data into POSIXct format, use timezone UTC (should use Indian?)
+	date_time_string <- CHW_file$formatted_timeStart
+	date_time_POSIXct <- as.POSIXct(strptime(date_time_string, format="%Y-%m-%d %H:%M:%S", tz="IST"))
+	
+	# extract time only from date_time_POSIXct by taking a substring of the whole date/time string and pasting it to an arbitrary date (and specifying time_only_final as class POSIXct)
+	time_only <- substr(date_time_POSIXct, 12, 16)
+	time_only_final <- as.POSIXct(paste("2012-01-01", time_only))
+	
+	#add a column to data for time_only_final
+	CHW_file <- data.frame(time_only_final, CHW_file)
+	
+	#find all unique CHWs in file
+	unique_CHWs <- unique(CHW_file$form.meta.userID)
+	
+	#try it with xlim
+	#xlim <- as.POSIXct(c("2001-06-14 00:00:00", "2001-06-14 12:00:00"))
+	
+	#this function formats the timestamps and takes care of all the plotting
+	plot_CHWhists <- function (data, filename){	
+	
+		pdf(filename, width=12, height=5, onefile=TRUE)
+	
+		#plot out collection times using ggplot2
+		p <- qplot(data$time_only_final) + xlab("Collection Time") + ylab("Number of Reports") + labs(title="Number of Reports Collected per Hour")+ scale_x_datetime(labels=date_format("%H:00"), breaks=date_breaks("1 hour"))
+		suppressWarnings(print(p))
+		
+		dev.off()
+	}
+	
+	#iterate through the unique_CHWs list, make a subset for each CHW, and send the subset to plot_CHWhists for plotting
+	for (n in unique_CHWs){
+		CHW_subset <- subset(CHW_file, CHW_file$form.meta.userID == n)
+		output_filename <- paste(n, ".pdf", sep="")
+		plot_CHWhists(CHW_subset, output_filename)
+	}	

@@ -1,0 +1,48 @@
+##Add a column name for start_date with the proper formatting, pull unique CHW names from file, make a subset of data for each CHW, and plot a histogram of the number of reports collected each day for each CHW
+
+# Good resource for plotting and labeling time data: https://stat.ethz.ch/pipermail/r-help/2004-May/051251.html
+	
+	CHW_file <- #read in file
+	
+	#convert date/time to proper format, strip time to only have date and add a col named start_date
+	start_date_time <- strptime(as.character(CHW_file$formatted_timeStart), "%Y-%m-%d %H:%M:%S")
+	start_date_only <- substr(start_date_time, 1, 10)
+	CHW_file <- data.frame(start_date, CHW_file)
+	
+	#find all unique CHWs in file
+	unique_CHWs <- unique(CHW_file$form.meta.userID)
+	
+	output_filename <- paste("Reports_Collected_per_CHW", ".pdf", sep="")
+	pdf(output_filename, width=12, height=5, onefile=TRUE)
+	
+	#plot four graphs per page
+	par(mfrow = c(2,2))
+	
+	#this function takes care of all the plotting, and calculates the number of breaks to put in the data based on the length of data collection
+	plot_CHWhists <- function (data, graph_title){
+		
+		#find the date range between the first and last reports collected and store this as timediff
+		daterange <- c(as.POSIXlt(min(data$start_date)),as.POSIXlt(max(data$start_date))) 
+		timediff <- daterange[2] - daterange[1]
+		timediff_num <- as.numeric(timediff)
+		
+		#timediff_num will be zero if all data is collected on the same day, so make it 1 if it's already zero (i.e. all data was collected on the same day)
+		if(timediff_num == 0) {timediff_num <- 1}
+		
+		#Set beginning and ends dates for graph display
+		startMonth <- as.POSIXct(as.Date("08/1/2012", format="%m/%d/%Y"))
+		endMonth <- as.POSIXct(as.Date("06/01/2013", format="%m/%d/%Y"))
+
+		#plot the data in a histogram
+		hist(data$start_date, breaks = timediff_num, main = graph_title, xlab = "Date Collected", ylab = "Number of Reports", xaxt="n", xlim=c(startMonth, endMonth), ylim=c(1,12), freq=TRUE)
+		axis.POSIXct(1, at=seq(startMonth, endMonth, by="month"), format="%b %y")
+		}
+	
+	#iterate through the unique_CHWs list, make a subset for each CHW, and send the subset to plot_CHWhists for plotting
+	for (n in unique_CHWs){
+		title = n
+		CHW_subset <- subset(CHW_file, CHW_file$form.meta.userID == n)
+		plot_CHWhists(CHW_subset, title)
+	}	
+	
+	dev.off()
